@@ -16,20 +16,20 @@ def ConProb(nRep: int, nEps: int, X: list, Xn: list) -> list:
     return results
 
 # convergence in quadratic mean
-def ConQM(nRep: int, X: list, Xn: list) -> list:
+def ConQM(nRep: int, nEps: int, X: list, Xn: list) -> list:
     return [0, 0, 0]
 
 #  Stochastic convergence
 def StoCon():
-    nRep = 2 * 16 # number of simulations
+    nRep = 2 * 17 # number of simulations
     nLen = 5
     nSize = [2 ** i for i in range(nLen)] # number of sample size
 
-    nEps = 3 # number of epsilons
+    nEps = 4 # number of epsilons
     ProbResult = [[] * nEps for i in range(nLen)] # there are 3 epsilons
     QMResult = [[] * nEps for i in range(nLen)] # there are 3 epsilons
     
-    for i in range(5):
+    for i in range(nLen):
         n = nSize[i]
         X = []
         Xn = []
@@ -43,15 +43,17 @@ def StoCon():
         ProbResult[i] = ConProb(nRep, nEps, X, Xn)
         QMResult[i]   = ConQM(nRep, nEps, X, Xn)
 
-    for 
+    ProbVis = [[] * nLen for i in range(nEps)]
 
-    plt.plot([i for i in range(1, nSize)], Xn, 'b')
-    plt.plot([i for i in range(1, nSize)], [X for i in range(1, nSize)], 'r')
-    plt.show()    
-        
+    for i in range(nEps):
+        ProbVis[i] = [ProbResult[j][i] for j in range(nLen)]
+
+    plt.plot(nSize, ProbVis, 'r')
+    plt.title(f'The line graph of probability vs number of samples')
+    plt.xlabel('Number of samples')
+    plt.ylabel(r'$ P(| X - X_n | > \epsilon) $')
+    plt.show()
 
 
 if __name__ == "__main__":
     StoCon()
-
-    print(ProbResult)
