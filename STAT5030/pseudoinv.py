@@ -1,43 +1,57 @@
 import numpy as np
 import scipy
 
-#  Generate the Moore-Penrose Inverse
+# Generate orthonormal vectors
+def GenOrthVec(UT: np.array):
+    mat_shape = UT.shape[0]
+    rawgram = np.random.dirichlet(tuple([1 for i in range(mat_shape)]))
+    rawgram /= scipy.linalg.norm(rawgram)
+    gram = rawgram - np.dot(rawgram, UT[0]) * UT[0]
+
+    for i in range(1, mat_shape):
+        gram -= np.dot(gram, UT[i]) * UT[i]
+    gram /= scipy.linalg.norm(gram)
+    
+    return gram
+
+# Generate the Moore-Penrose Inverse
 def GenMPInv(mat: np.array):
     mat_shape = mat.shape
 
-    # if the number of columns are greater than the number of rows
-    if mat_shape[1] > mat_shape[0]:
-        # rank(mat) <= rows
-        mat_sq = np.matmul(mat, mat.transpose()) # mat_sq = A A^T
-        eigenval, eigenvec = np.linalg.eig(mat_sq)
-        eigenval = np.sort(eigenval)[::-1]
+    if mat_shape[1] > mat_shape[0]: # if the number of columns are greater than the number of rows
+        mat = mat.transpose()
+        mat_shape = mat.shape
 
-        # singular matrix S
-        S = np.zeros(mat_shape)
-        for i in range(len(eigenval)):
-            S[i][i] = np.sqrt(eigenval[i])
+    eigenval, eigenvec = np.linalg.eigh(np.matmul(mat.transpose(), mat))
+    eigenvec = eigenvec[np.argsort(eigenval)[::-1]].transpose()
+    eigenval = np.sort(eigenval)[::-1]
+    
+    svd_left = np.matmul(mat, eigenvec)
 
-        # singular value decomposition
-        svd_left = np.matmul(mat, eigenvec.transpose()) # AV = US
+    S = np.zeros(mat_shape)
+    for i in range(len(eigenval)):
+        S[i][i] = np.sqrt(eigenval[i])
 
-        # matrix U
-        UT = np.zeros((mat_shape[1], mat_shape[1]))
-        for i in range(len(eigenval)):
-            if eigenval[i] > 0:
-                u = svd_left.transpose()[i]
-                UT[i] = u
+    UT = np.zeros((mat_shape[0], mat_shape[0]))
+    for i in range(len(eigenval)):
+        if eigenval[i] > 0:
+            u = svd_left.transpose()[i] / S[i][i]
+            UT[i] = u
 
-    # if the number of rows are greater than the number of columns
-    else:
-        # rank(mat) <= columns
-        mat_sq = np.matmul(mat.transpose(), mat) # mat_sq = A^T A
-        eigenval, eigenvec = np.linalg.eig(mat_sq)
-        eigenval = np.sort(eigenval)[::-1]
-        # singular matrix S
-        # singular value decomposition
-        ds
+    for i in range(mat_shape[0]):
+        if scipy.linalg.norm(UT[i]) == 0.0:
+            UT[i] = GenOrthVec(UT)
 
-    return 1
+    SP = np.zeros((S.shape[1], S.shape[0]))
+    for i in range(len(eigenval)):
+        if eigenval[i] > 0:
+            SP[i][i] = 1 / np.sqrt(eigenval[i])
+
+    MPInv = np.matmul(eigenvec.transpose(), SP)
+    MPInv = np.matmul(MPInv, UT)
+    MPInv = np.abs(MPInv)
+
+    return MPInv
 
 # Generate the Generalized Inverse
 def GenGInv():
@@ -45,4 +59,5 @@ def GenGInv():
 
 
 if __name__ == "__main__":
-    results = GenMPInv()
+    mat = np.array([[2, 6], [1, 3], [3, 9], [5, 15]])
+    print(GenMPInv(mat))
